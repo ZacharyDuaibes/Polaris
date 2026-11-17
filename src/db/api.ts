@@ -183,16 +183,30 @@ export const updateDronePosition = async (
   lng: number,
   battery: number,
   status: string,
-  route?: {
+  extras?: {
     waypoints?: RouteWaypoint[] | null;
     intent?: RouteIntent;
+    current_node_id?: string | null;
+    destination_lat?: number | null;
+    destination_lng?: number | null;
   }
 ): Promise<void> => {
   const routePayload =
-    route && (route.waypoints !== undefined || route.intent !== undefined)
+    extras && (extras.waypoints !== undefined || extras.intent !== undefined)
       ? {
-          route_waypoints: route.waypoints ?? null,
-          route_intent: route.intent ?? null,
+          route_waypoints: extras.waypoints ?? null,
+          route_intent: extras.intent ?? null,
+        }
+      : {};
+  const nodePayload =
+    extras && extras.current_node_id !== undefined
+      ? { current_node_id: extras.current_node_id }
+      : {};
+  const destinationPayload =
+    extras && (extras.destination_lat !== undefined || extras.destination_lng !== undefined)
+      ? {
+          destination_lat: extras.destination_lat ?? null,
+          destination_lng: extras.destination_lng ?? null,
         }
       : {};
   await apiFetch<void>(`/api/drones/${id}`, {
@@ -203,6 +217,8 @@ export const updateDronePosition = async (
       battery,
       status,
       ...routePayload,
+      ...nodePayload,
+      ...destinationPayload,
       updated_at: new Date().toISOString(),
     }),
   });

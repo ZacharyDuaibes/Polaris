@@ -101,3 +101,15 @@ All colors MUST be HSL.
     color: transparent;
   }
 }
+
+/* Leaflet + Tailwind preflight: keep tile images at true size */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  background: hsl(var(--muted));
+}
+
+.leaflet-container img {
+  max-width: none !important;
+}

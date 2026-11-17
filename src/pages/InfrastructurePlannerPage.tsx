@@ -22,6 +22,12 @@ import { Network, Plus, TrendingDown, AlertCircle, MapPin, Trash2, Plane } from 
 import { toast } from 'sonner';
 import { createDroneIcon, createNodeIcon, createPlacementPinIcon } from '@/lib/leafletIcons';
 import { getRouteColor } from '@/lib/routeColors';
+import {
+  DEFAULT_MAP_CENTER,
+  DEFAULT_MAP_ZOOM,
+  OSM_TILE_ATTRIBUTION,
+  OSM_TILE_URL,
+} from '@/lib/mapTiles';
 import { runSimulation } from '@/lib/simulation';
 import {
   Select,
@@ -260,17 +266,21 @@ const InfrastructurePlannerPage: React.FC = () => {
     if (!L || !mapRef.current || leafletMapRef.current) return;
 
     const map = L.map(mapRef.current, {
-      center: [newNode.lat, newNode.lng],
-      zoom: 12,
+      center: [newNode.lat || DEFAULT_MAP_CENTER[0], newNode.lng || DEFAULT_MAP_CENTER[1]],
+      zoom: DEFAULT_MAP_ZOOM,
       zoomControl: false,
       attributionControl: false,
     });
     leafletMapRef.current = map;
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; CartoDB',
+    L.tileLayer(OSM_TILE_URL, {
+      attribution: OSM_TILE_ATTRIBUTION,
+      maxZoom: 19,
     }).addTo(map);
+
+    requestAnimationFrame(() => {
+      map.invalidateSize();
+    });
 
     map.on('click', (event: { latlng: { lat: number; lng: number } }) => {
       const { lat, lng } = event.latlng;

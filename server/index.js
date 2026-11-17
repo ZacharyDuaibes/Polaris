@@ -64,7 +64,6 @@ const corsOptions = {
 
 app.use((req, res, next) => {
   const origin = req.headers.origin || '*';
-  console.debug('CORS DEBUG: request origin=', origin, 'method=', req.method, 'path=', req.path);
   res.setHeader('Access-Control-Allow-Origin', origin === 'null' ? '*' : origin);
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,PUT,DELETE,OPTIONS');
@@ -72,7 +71,6 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Expose-Headers', 'Content-Length,ETag,*');
   res.setHeader('Access-Control-Max-Age', '86400');
   if (req.method === 'OPTIONS') {
-    console.debug('CORS DEBUG: preflight response for', req.path);
     res.status(204).send('');
     return;
   }

@@ -93,13 +93,13 @@ Configure environment variables and install relevant dependencies. The API serve
 
 ### Authentication
 
-Authentication is handled by Auth0. New real users sign in through Auth0 and then get a Polaris profile in MongoDB on first access.
+Local username/password auth against the API server (no Auth0). Seeded demo accounts: `admin`, `provider`, and `operator` — password for all is `demo`. You can also sign up a new local user from the login page.
 
 ### Demo Data
 
-Run `npm run seed:large` to populate MongoDB with demo companies, profiles, nodes, and drones for presentation purposes.
+Without `MONGODB_URI`, the API uses an in-memory seed store automatically.
 
-The generated `server/seed-data/demo-profiles.json` file is a manifest of seeded demo profiles only. These are not real login credentials and cannot sign in unless a matching Auth0 account also exists.
+With MongoDB configured, run `npm run seed:large` to populate demo companies, profiles, nodes, and drones for presentation purposes.
 
 
 ## Learn More

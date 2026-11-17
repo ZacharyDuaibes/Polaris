@@ -1,159 +1,101 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
-import type { Profile, UserRole } from '@/types/database';
-import { getProfileById, upsertProfile } from '@/db/api';
+import type { Profile } from '@/types/database';
+import { getProfileById, signIn, signUp, type AuthUser } from '@/db/api';
 import { toast } from 'sonner';
-
-export interface AuthUser {
-  id: string;
-  email: string | null;
-  username: string | null;
-  created_at: string;
-}
 
 interface AuthContextType {
   user: AuthUser | null;
   profile: Profile | null;
   loading: boolean;
-  login: (returnTo?: string) => Promise<void>;
-  signup: (returnTo?: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
+  signup: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
+interface StoredSession {
+  user: AuthUser;
+  profile: Profile;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const SESSION_KEY = 'polaris.auth.session';
 
-const createProfileForUser = (user: AuthUser): Profile => {
-  const username = user.username ?? user.email?.split('@')[0] ?? 'operator';
-  const normalized = username.trim().toLowerCase();
-  const role: UserRole =
-    normalized === 'admin' ? 'admin' : normalized === 'provider' ? 'provider' : 'operator';
-
-  return {
-    id: user.id,
-    email: user.email,
-    username,
-    role,
-    company_id: null,
-    created_at: user.created_at,
-  };
+const readSession = (): StoredSession | null => {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredSession;
+    if (!parsed?.user?.id || !parsed?.profile?.id) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
 };
 
-const normalizeAuthUser = (auth0User: {
-  sub?: string;
-  email?: string;
-  nickname?: string;
-  name?: string;
-  updated_at?: string;
-}): AuthUser => ({
-  id: auth0User.sub ?? '',
-  email: auth0User.email ?? null,
-  username: auth0User.nickname ?? auth0User.name ?? auth0User.email?.split('@')[0] ?? null,
-  created_at: auth0User.updated_at ?? new Date().toISOString(),
-});
+const writeSession = (session: StoredSession | null) => {
+  if (!session) {
+    localStorage.removeItem(SESSION_KEY);
+    return;
+  }
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const {
-    isAuthenticated,
-    isLoading: auth0Loading,
-    user: auth0User,
-    loginWithRedirect,
-    logout,
-  } = useAuth0();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [profileLoading, setProfileLoading] = useState(false);
-
-  const syncProfile = async (nextUser: AuthUser) => {
-    const existingProfile = await getProfileById(nextUser.id);
-    if (existingProfile) {
-      setProfile(existingProfile);
-      return;
-    }
-
-    const createdProfile = await upsertProfile(createProfileForUser(nextUser));
-    setProfile(createdProfile);
-  };
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (auth0Loading) {
-      return;
+    const session = readSession();
+    if (session) {
+      setUser(session.user);
+      setProfile(session.profile);
     }
+    setLoading(false);
+  }, []);
 
-    if (!isAuthenticated || !auth0User?.sub) {
-      setUser(null);
-      setProfile(null);
-      setProfileLoading(false);
-      return;
-    }
-
-    const nextUser = normalizeAuthUser(auth0User);
-    setUser(nextUser);
-    setProfileLoading(true);
-
-    void syncProfile(nextUser)
-      .catch((error) => {
-        toast.error('Failed to sync profile');
-        console.error(error);
-      })
-      .finally(() => {
-        setProfileLoading(false);
-      });
-  }, [auth0Loading, isAuthenticated, auth0User]);
-
-  const login = async (returnTo = window.location.pathname) => {
-    await loginWithRedirect({
-      appState: { returnTo },
-      authorizationParams: {
-        redirect_uri: window.location.origin,
-        prompt: 'login',
-      },
-    });
+  const applySession = (session: StoredSession) => {
+    writeSession(session);
+    setUser(session.user);
+    setProfile(session.profile);
   };
 
-  const signup = async (returnTo = window.location.pathname) => {
-    await loginWithRedirect({
-      appState: { returnTo },
-      authorizationParams: {
-        redirect_uri: window.location.origin,
-        prompt: 'login',
-        screen_hint: 'signup',
-      },
-    });
+  const login = async (username: string, password: string) => {
+    const session = await signIn(username, password);
+    applySession(session);
+  };
+
+  const signup = async (username: string, password: string) => {
+    const session = await signUp(username, password);
+    applySession(session);
   };
 
   const signOut = async () => {
+    writeSession(null);
     setUser(null);
     setProfile(null);
-    await logout({
-      logoutParams: {
-        returnTo: window.location.origin,
-      },
-    });
   };
 
   const refreshProfile = async () => {
-    if (!user) {
+    const session = readSession();
+    if (!session) {
+      setUser(null);
       setProfile(null);
       return;
     }
 
     try {
-      const profileData = await getProfileById(user.id);
+      const profileData = await getProfileById(session.user.id);
       if (profileData) {
-        setProfile(profileData);
-        return;
+        const next = { user: session.user, profile: profileData };
+        applySession(next);
       }
-
-      const createdProfile = await upsertProfile(createProfileForUser(user));
-      setProfile(createdProfile);
     } catch (error) {
       toast.error('Failed to refresh profile');
       console.error(error);
     }
   };
-
-  const loading = auth0Loading || profileLoading;
 
   const contextValue = useMemo(
     () => ({

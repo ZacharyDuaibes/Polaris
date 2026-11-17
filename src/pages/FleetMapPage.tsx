@@ -10,6 +10,12 @@ import type { DroneWithCompany, Node } from '@/types/database';
 import { Zap, MapPin, Activity } from 'lucide-react';
 import { createDroneIcon, createNodeIcon } from '@/lib/leafletIcons';
 import { getRouteColor } from '@/lib/routeColors';
+import {
+  DEFAULT_MAP_CENTER,
+  DEFAULT_MAP_ZOOM,
+  OSM_TILE_ATTRIBUTION,
+  OSM_TILE_URL,
+} from '@/lib/mapTiles';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -89,22 +95,23 @@ const FleetMapPage: React.FC = () => {
     setLeafletReady(true);
     if (!mapRef.current || leafletMapRef.current) return;
 
-    const montrealLat = 45.5017;
-    const montrealLng = -73.5673;
-
     const map = L.map(mapRef.current, {
-      center: [montrealLat, montrealLng],
-      zoom: 13,
+      center: DEFAULT_MAP_CENTER,
+      zoom: DEFAULT_MAP_ZOOM,
       zoomControl: false,
-      attributionControl: false
+      attributionControl: false,
     });
     leafletMapRef.current = map;
     setMapReady(true);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; CartoDB',
+    L.tileLayer(OSM_TILE_URL, {
+      attribution: OSM_TILE_ATTRIBUTION,
+      maxZoom: 19,
     }).addTo(map);
+
+    requestAnimationFrame(() => {
+      map.invalidateSize();
+    });
 
     return () => {
       if (leafletMapRef.current) {
@@ -275,6 +282,9 @@ const FleetMapPage: React.FC = () => {
 
     const bounds = L.latLngBounds(points);
     map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+    requestAnimationFrame(() => {
+      map.invalidateSize();
+    });
     hasFitBoundsRef.current = true;
   }, [displayDrones, displayNodes, mapReady]);
 

@@ -10,8 +10,9 @@ export const seedData = {
       role: 'admin',
       company_id: null,
       created_at: now,
+      // password: demo
       password_hash:
-        'a8f80679af24912b238e93fb775a2ef0:007d3934b8667be86d41827d0eebeb659cbf80b860a39858c43739bfca3edaf743d2098ce453453fc291070067f0bc2b616d4721f121fdce7d4d31fca5f271bf',
+        'ea9056f6184d308bba41c436b5e9d904:90e7cd93078f63c4b57869262eb1505f45c3f81c14cea1e727cd7f9657e5413d486ad8b3afc228b5236c9911ba579c90e09d6ece7ca5187b11b5e44296ce0122',
     },
     {
       id: 'profile-provider',
@@ -21,8 +22,9 @@ export const seedData = {
       role: 'provider',
       company_id: 'company-aurora',
       created_at: now,
+      // password: demo
       password_hash:
-        '535d13df25150d8d76b866c970ecaceb:53f078df9e6fd24b35bc9f6ad516821eb00b7177606295a5d91b33f8874a38d1b4c91af5cecb2e76be5c92958a5d9982b82511add26c169d0735b4f7ce8c2b7a',
+        'bdc8311ae01f2fa9517286a2a4fda414:9a379310a82da531514c0c8e11a3affc53e6326b5c53802cec3b56cdd9b44a647f28092b08ebda52978e462b244628a1f56da17cd33ff01ca9cc41ac35881aa4',
     },
     {
       id: 'profile-operator',
@@ -32,8 +34,9 @@ export const seedData = {
       role: 'operator',
       company_id: 'company-skylink',
       created_at: now,
+      // password: demo
       password_hash:
-        'de227c8e618113c1e3ba1b90c90b145f:4f0dc73e7ca754f1681f8ef41c308f350def2e706e6f5d9414779907406cf598035ce5cf94244ea087d7891fac54be082e3b64c335a0dd59fd715f67227e3e8c',
+        'e627b52487a4b3e43d74cdc88741a012:cf4eeea84872a98ff0f9c390ba6414ce86df6e5710df7c1b7a8294d65d5ec6e2057f8388259ad1d2c8b2442bbb354927ba172567fbf770d4cb9303f7505c7a72',
     },
   ],
   companies: [
